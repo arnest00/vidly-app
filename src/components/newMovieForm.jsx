@@ -1,8 +1,8 @@
 import React from 'react';
 import Joi from 'joi-browser';
 import Form from './common/form';
-import { movies, saveMovie } from '../services/fakeMovieService';
-import { getGenres } from '../services/fakeGenreService';
+import * as moviesAPI from '../services/fakeMovieService';
+import * as genresAPI from '../services/fakeGenreService';
 
 class NewMovieForm extends Form {
   state = {
@@ -23,12 +23,20 @@ class NewMovieForm extends Form {
   };
 
   doSubmit = () => {
-    // To be added to list of movies
-    console.log(this.state.data);
+    const { title, genre, numberInStock, dailyRentalRate } = this.state.data;
+    const newMovie = {
+      title,
+      genre,
+      numberInStock,
+      dailyRentalRate
+    };
+    moviesAPI.saveMovie(newMovie);
+
+    this.props.history.push('/movies');
   };
 
   render() {
-    const options = getGenres().map(genre => (
+    const options = genresAPI.getGenres().map(genre => (
       {
         label: genre.name,
         value: genre.name
