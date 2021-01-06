@@ -17,6 +17,9 @@ class MovieForm extends Form {
 
   componentDidMount() {
     const movie = moviesAPI.getMovie(this.props.match.params.id);
+    if (!movie)
+      return this.props.history.push('/not-found');
+
     const { title, genre, numberInStock, dailyRentalRate } = movie;
     
     this.setState({
@@ -51,7 +54,7 @@ class MovieForm extends Form {
 
     moviesAPI.saveMovie(movie);
 
-    this.props.history.push('/movies');
+    return this.props.history.push('/movies');
   };
 
   render() { 
@@ -64,6 +67,7 @@ class MovieForm extends Form {
 
     return (
       <div>
+
         <h1>Edit {this.state.data.title}</h1>
         <form onSubmit={this.handleSubmit}>
           {this.renderInput('title', 'Title')}
