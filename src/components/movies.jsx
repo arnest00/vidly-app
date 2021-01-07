@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import SearchBox from './common/searchBox';
 import MoviesTable from './moviesTable';
 import Pagination from './common/pagination';
 import ListGroup from './common/listGroup';
@@ -13,10 +14,18 @@ class Movies extends Component {
       pageSize,
       currentPage,
       currentGenre,
-      sortColumn
+      sortColumn,
+      searchQuery
     } = this.props;
 
-    const filteredMovies = currentGenre && currentGenre._id ? movies.filter(m => m.genre._id === currentGenre._id) : movies;
+    let filteredMovies = movies;
+    if (searchQuery)
+      filteredMovies = movies.filter(m =>
+        m.title.toLowerCase().startsWith(searchQuery.toLowerCase())  
+      );
+    else if (currentGenre && currentGenre._id)
+      filteredMovies = movies.filter(m => m.genre._id === currentGenre._id);
+    
     const sortedMovies = _.orderBy(filteredMovies, [sortColumn.path], [sortColumn.order]);
     const displayedMovies = paginate(sortedMovies, currentPage, pageSize);
 
@@ -24,21 +33,20 @@ class Movies extends Component {
   };
 
   render() {
-    const { length: moviesCount } = this.props.movies;
     const {
       genres,
       pageSize,
       currentPage,
       currentGenre,
       sortColumn,
+      searchQuery,
       onLike,
       onDelete,
       onSort,
       onPageChange,
-      onListSelect
+      onListSelect,
+      onSearch
     } = this.props;
-
-    if (moviesCount === 0) return <p className='m-2'>There are no movies in the database.</p>;
 
     const { totalCount, data: displayedMovies } = this.getPagedData();
 
@@ -62,6 +70,10 @@ class Movies extends Component {
             </button>
           </Link>
           <p className='m-2'>Showing {totalCount} movies in the database.</p>
+          <SearchBox
+            value={searchQuery}
+            onChange={onSearch}
+          />
           <MoviesTable 
             movies={displayedMovies}
             sortColumn={sortColumn}

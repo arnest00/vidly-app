@@ -16,6 +16,8 @@ class App extends Component {
     movies: [],
     genres: [],
     pageSize: 4,
+    searchQuery: '',
+    currentGenre: null,
     currentPage: 1,
     sortColumn: { path: 'title', order: 'asc' }
   };
@@ -50,7 +52,11 @@ class App extends Component {
   };
 
   handleListSelect = list => {
-    this.setState({ currentGenre: list, currentPage: 1 });
+    this.setState({ searchQuery: '', currentGenre: list, currentPage: 1 });
+  };
+
+  handleSearch = query => {
+    this.setState({ searchQuery: query, currentGenre: null, currentPage: 1});
   };
 
   render() { 
@@ -70,11 +76,13 @@ class App extends Component {
               currentPage={this.state.currentPage}
               currentGenre={this.state.currentGenre}
               sortColumn={this.state.sortColumn}
+              searchQuery={this.state.searchQuery}
               onDelete={this.handleDelete}
               onLike={this.handleLike}
               onSort={this.handleSort}
               onPageChange={this.handlePageChange}
               onListSelect={this.handleListSelect}
+              onSearch={this.handleSearch}
             />
           )} />
           <Route path='/customers' component={Customers} />
