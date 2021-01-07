@@ -49,18 +49,6 @@ class Form extends Component {
     this.setState({ data, errors });
   };
 
-  handleSelect = ({ currentTarget: input }) => {
-    const errors = {...this.state.errors};
-    const errorMessage = this.validateProperty(input);
-    if (errorMessage) errors[input.name] = errorMessage;
-    else delete errors[input.name];
-
-    const data = {...this.state.data};
-    data[input.name] = input.value;
-
-    this.setState({ data, errors });
-  };
-
   renderButton(label) {
     return (
       <button disabled={this.validate()} className="btn btn-primary">
@@ -84,15 +72,14 @@ class Form extends Component {
     );
   };
 
-  renderSelect(name, label, options, defaultValue) {
+  renderSelect(name, label, options) {
     const { data, errors } = this.state;
 
     return (
       <Select
-        data={data}
         name={name}
+        value={data[name]}
         label={label}
-        value={defaultValue}
         options={options}
         onChange={this.handleChange}
         error={errors[name]}

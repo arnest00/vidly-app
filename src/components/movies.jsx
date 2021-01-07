@@ -56,6 +56,7 @@ class Movies extends Component {
             <button
               type="button" 
               className="btn btn-primary"
+              style={{ marginBottom: 20 }}
             >
               New Movie
             </button>
