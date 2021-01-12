@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { Route, Switch, Redirect } from 'react-router-dom';
-import { getMovies } from './services/fakeMovieService';
-import { getGenres } from './services/fakeGenreService';
+import { toast, ToastContainer } from 'react-toastify';
+import { getMovies, deleteMovie } from './services/movieService';
+import { getGenres } from './services/genreService';
 import Movies from './components/movies';
 import MovieForm from './components/movieForm';
 import Navbar from './components/navbar';
@@ -10,6 +11,7 @@ import Rentals from './components/rentals';
 import NotFound from './components/notFound';
 import LoginForm from './components/common/loginForm';
 import RegisterForm from './components/common/registerForm';
+import 'react-toastify/dist/ReactToastify.css';
 
 class App extends Component {
   state = {
@@ -22,15 +24,27 @@ class App extends Component {
     sortColumn: { path: 'title', order: 'asc' }
   };
 
-  componentDidMount() {
-    const genres = [{ name: 'All Genres', _id: '' }, ...getGenres()];
+  async componentDidMount() {
+    const { data } = await getGenres();
+    const genres = [{ name: 'All Genres', _id: '' }, ...data];
 
-    this.setState({ movies: getMovies(), genres });
+    const { data: movies } = await getMovies();
+    this.setState({ movies, genres });
   };
 
-  handleDelete = movie => {
-    const movies = this.state.movies.filter(m => m._id !== movie._id);
+  handleDelete = async movie => {
+    const originalMovies = this.state.movies;
+    const movies = originalMovies.filter(m => m._id !== movie._id);
     this.setState({ movies });
+
+    try {
+      await deleteMovie(movie._id);
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        toast.error('This movie has already been deleted.');
+
+      this.setState({ movies: originalMovies });
+    };
   };
 
   handleLike = movie => {
@@ -62,6 +76,7 @@ class App extends Component {
   render() { 
     return (
       <React.Fragment>
+        <ToastContainer />
         <Navbar />
         <main className='container'>
         <Switch>
