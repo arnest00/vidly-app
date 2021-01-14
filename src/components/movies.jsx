@@ -1,30 +1,92 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import SearchBox from './common/searchBox';
 import MoviesTable from './moviesTable';
 import Pagination from './common/pagination';
 import ListGroup from './common/listGroup';
 import { paginate } from '../utils/paginate';
+import { getMovies, deleteMovie } from '../services/movieService';
+import { getGenres } from '../services/genreService';
 import _ from 'lodash';
 
 class Movies extends Component {
+  state = {
+    movies: [],
+    genres: [],
+    pageSize: 4,
+    searchQuery: '',
+    currentGenre: null,
+    currentPage: 1,
+    sortColumn: { path: 'title', order: 'asc' }
+  };
+
+  async componentDidMount() {
+    const { data } = await getGenres();
+    const genres = [{ name: 'All Genres', _id: '' }, ...data];
+
+    const { data: movies } = await getMovies();
+    this.setState({ movies, genres });
+  };
+
+  handleDelete = async movie => {
+    const originalMovies = this.state.movies;
+    const movies = originalMovies.filter(m => m._id !== movie._id);
+    this.setState({ movies });
+
+    try {
+      await deleteMovie(movie._id);
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        toast.error('This movie has already been deleted.');
+
+      this.setState({ movies: originalMovies });
+    };
+  };
+
+  handleLike = movie => {
+    const movies = [...this.state.movies];
+    const index = movies.indexOf(movie);
+
+    movies[index] = { ...movies[index] };
+    movies[index].liked = !movies[index].liked;
+
+    this.setState({movies});
+  };
+
+  handleSort = sortColumn => {
+    this.setState({ sortColumn })
+  };
+
+  handlePageChange = page => {
+    this.setState({ currentPage: page });
+  };
+
+  handleListSelect = list => {
+    this.setState({ searchQuery: '', currentGenre: list, currentPage: 1 });
+  };
+
+  handleSearch = query => {
+    this.setState({ searchQuery: query, currentGenre: null, currentPage: 1});
+  };
+
   getPagedData = () => {
     const {
-      movies,
+      movies: allMovies,
       pageSize,
       currentPage,
       currentGenre,
       sortColumn,
       searchQuery
-    } = this.props;
+    } = this.state;
 
-    let filteredMovies = movies;
+    let filteredMovies = allMovies;
     if (searchQuery)
-      filteredMovies = movies.filter(m =>
+      filteredMovies = allMovies.filter(m =>
         m.title.toLowerCase().startsWith(searchQuery.toLowerCase())  
       );
     else if (currentGenre && currentGenre._id)
-      filteredMovies = movies.filter(m => m.genre._id === currentGenre._id);
+      filteredMovies = allMovies.filter(m => m.genre._id === currentGenre._id);
     
     const sortedMovies = _.orderBy(filteredMovies, [sortColumn.path], [sortColumn.order]);
     const displayedMovies = paginate(sortedMovies, currentPage, pageSize);
@@ -39,14 +101,8 @@ class Movies extends Component {
       currentPage,
       currentGenre,
       sortColumn,
-      searchQuery,
-      onLike,
-      onDelete,
-      onSort,
-      onPageChange,
-      onListSelect,
-      onSearch
-    } = this.props;
+      searchQuery
+    } = this.state;
 
     const { totalCount, data: displayedMovies } = this.getPagedData();
 
@@ -56,7 +112,7 @@ class Movies extends Component {
           <ListGroup
             listItems={genres}
             currentList={currentGenre}
-            onListSelect={onListSelect}
+            onListSelect={this.handleListSelect}
           />
         </div>
         <div className='col'>
@@ -72,20 +128,20 @@ class Movies extends Component {
           <p className='m-2'>Showing {totalCount} movies in the database.</p>
           <SearchBox
             value={searchQuery}
-            onChange={onSearch}
+            onChange={this.handleSearch}
           />
           <MoviesTable 
             movies={displayedMovies}
             sortColumn={sortColumn}
-            onLike={onLike}
-            onDelete={onDelete}
-            onSort={onSort}
+            onLike={this.handleLike}
+            onDelete={this.handleDelete}
+            onSort={this.handleSort}
           />
           <Pagination
             itemsCount={totalCount}
             pageSize={pageSize}
             currentPage={currentPage}
-            onPageChange={onPageChange}
+            onPageChange={this.handlePageChange}
           />
         </div>
       </div>
